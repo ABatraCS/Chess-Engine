@@ -77,6 +77,26 @@ class Piece:
         return f'{self.piece_color.name} {self.piece_type.name}'
 
 
+    # returns a unicode string of the piece for board printing
+    def symbol(self) -> str:
+        symbols = {
+            (PieceType.Pawn, PieceColor.White): "♟︎",
+            (PieceType.Rook, PieceColor.White): "♜",
+            (PieceType.Knight, PieceColor.White): "♞",
+            (PieceType.Bishop, PieceColor.White): "♝",
+            (PieceType.Queen, PieceColor.White): "♛",
+            (PieceType.King, PieceColor.White): "♚",
+
+            (PieceType.Pawn, PieceColor.Black): "♙",
+            (PieceType.Rook, PieceColor.Black): "♖",
+            (PieceType.Knight, PieceColor.Black): "♘",
+            (PieceType.Bishop, PieceColor.Black): "♗",
+            (PieceType.Queen, PieceColor.Black): "♕",
+            (PieceType.King, PieceColor.Black): "♔"
+        }
+        return symbols.get((self.piece_type, self.piece_color), '?')
+
+
 
 # similarly, a move really only needs to know the start and end positions. other classes/functions can handle 
 # captures, castling, en passant, etc. this might seem like a bad decision, but it's actually a good one.
@@ -96,7 +116,42 @@ class Move:
     def position_to_notation(position: tuple[int, int]) -> str:
         col, row = position
         return chr(col + ord('a')) + str(row + 1)
-        
+
+
+
+initial_board = [
+    [
+        Piece(PieceType.Rook, PieceColor.White),
+        Piece(PieceType.Knight, PieceColor.White),
+        Piece(PieceType.Bishop, PieceColor.White),
+        Piece(PieceType.Queen, PieceColor.White),
+        Piece(PieceType.King, PieceColor.White),
+        Piece(PieceType.Bishop, PieceColor.White),
+        Piece(PieceType.Knight, PieceColor.White),
+        Piece(PieceType.Rook, PieceColor.White),
+    ],
+
+    [ Piece(PieceType.Pawn, PieceColor.White) for _ in range(8) ],
+
+    [ None for _ in range(8)],
+    [ None for _ in range(8)],
+    [ None for _ in range(8)],
+    [ None for _ in range(8)],
+
+    [ Piece(PieceType.Pawn, PieceColor.Black) for _ in range(8) ],
+
+    [
+        Piece(PieceType.Rook, PieceColor.Black),
+        Piece(PieceType.Knight, PieceColor.Black),
+        Piece(PieceType.Bishop, PieceColor.Black),
+        Piece(PieceType.Queen, PieceColor.Black),
+        Piece(PieceType.King, PieceColor.Black),
+        Piece(PieceType.Bishop, PieceColor.Black),
+        Piece(PieceType.Knight, PieceColor.Black),
+        Piece(PieceType.Rook, PieceColor.Black),
+    ],
+]
+
 
 
 # our game only needs to know the board and whose turn it is; we will later add castling rights, 
@@ -105,9 +160,36 @@ class Game:
     # note that the board here is a simple 2D array with no out-of-bounds checks at all. 
     # later we will enforce this, and if we are looking to really get fast, we should 
     # consider changing the fundamental data structure to something like a tree.
-    def __init__(self, board: list[list[Piece | None]], side_to_move: PieceColor):
+    def __init__(self, board: list[list[Piece | None]] = initial_board, side_to_move: PieceColor = PieceColor.White):
         self.board = board
         self.side_to_move = side_to_move
+    
+
+
+    def __str__(self) -> str:
+        s = ""
+        if self.side_to_move == PieceColor.White: 
+            s += "Side to move: White \n" 
+        else: 
+            s += "Side to move: Black \n" 
+            
+        
+        s += "   -----------------------------------\n"
+
+        for row in range(7, -1, -1):
+            s += str(row+1) + "   | "
+            for column in range(0, 8):
+                if self.board[row][column]:
+                    s += self.board[row][column].symbol()
+                else:
+                    s += " "
+                s += " | "
+
+            s += "\n   -----------------------------------\n"
+        
+        s += "      A   B   C   D   E   F   G   H   \n"
+
+        return s
 
 
     # here is our evaluation function. note that it is as simple as it gets.
@@ -125,19 +207,19 @@ class Game:
     def get_piece_legal_moves(self, piece: Piece) -> list[Move]:
         legal_moves = []
 
-        # i despise writing these and thus i refuse to do it
-        if piece.piece_type == PieceType.Pawn:
-            # todo
-        elif piece.piece_type == PieceType.Bishop:
-            # todo
-        elif piece.piece_type == PieceType.Knight:
-            # todo
-        elif piece.piece_type == PieceType.Rook:
-            # todo
-        elif piece.piece_type == PieceType.Queen:
-            # todo
-        elif piece.piece_type == PieceType.King:
-            # todo
+        # # i despise writing these and thus i refuse to do it
+        # if piece.piece_type == PieceType.Pawn:
+        #     # todo
+        # elif piece.piece_type == PieceType.Bishop:
+        #     # todo
+        # elif piece.piece_type == PieceType.Knight:
+        #     # todo
+        # elif piece.piece_type == PieceType.Rook:
+        #     # todo
+        # elif piece.piece_type == PieceType.Queen:
+        #     # todo
+        # elif piece.piece_type == PieceType.King:
+        #     # todo
 
         return legal_moves
         
@@ -187,7 +269,6 @@ class Game:
         self.side_to_move = self.side_to_move.opponent()
 
 
-
 # ---------------------------------------------------------------------------------------------------------------------
 # the "engine"
 
@@ -221,3 +302,9 @@ def get_best_move(game: Game, depth: int) -> tuple[Move | None, int]:
 
 
     return best_move_and_evaluation
+
+
+initial_game = Game()
+
+print(initial_game)
+
