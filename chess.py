@@ -95,6 +95,52 @@ class Piece:
             (PieceType.King, PieceColor.Black): "♔"
         }
         return symbols.get((self.piece_type, self.piece_color), '?')
+    
+
+    # for reading FEN
+    @staticmethod
+    def from_character(char: str):
+        char_to_piece = {
+            'P': (PieceType.Pawn, PieceColor.White),
+            'R': (PieceType.Rook, PieceColor.White),
+            'N': (PieceType.Knight, PieceColor.White),
+            'B': (PieceType.Bishop, PieceColor.White),
+            'Q': (PieceType.Queen, PieceColor.White),
+            'K': (PieceType.King, PieceColor.White),
+            'p': (PieceType.Pawn, PieceColor.Black),
+            'r': (PieceType.Rook, PieceColor.Black),
+            'n': (PieceType.Knight, PieceColor.Black),
+            'b': (PieceType.Bishop, PieceColor.Black),
+            'q': (PieceType.Queen, PieceColor.Black),
+            'k': (PieceType.King, PieceColor.Black)
+        }
+        
+        piece_type, piece_color = char_to_piece.get(char, (None, None))
+        
+        if piece_type is None or piece_color is None:
+            raise ValueError(f"Invalid character for piece: {char}")
+        
+        return Piece(piece_type, piece_color)
+    
+
+    # for printing FEN
+    def to_character(self) -> str:
+        piece_to_char = {
+            (PieceType.Pawn, PieceColor.White): 'P',
+            (PieceType.Rook, PieceColor.White): 'R',
+            (PieceType.Knight, PieceColor.White): 'N',
+            (PieceType.Bishop, PieceColor.White): 'B',
+            (PieceType.Queen, PieceColor.White): 'Q',
+            (PieceType.King, PieceColor.White): 'K',
+            (PieceType.Pawn, PieceColor.Black): 'p',
+            (PieceType.Rook, PieceColor.Black): 'r',
+            (PieceType.Knight, PieceColor.Black): 'n',
+            (PieceType.Bishop, PieceColor.Black): 'b',
+            (PieceType.Queen, PieceColor.Black): 'q',
+            (PieceType.King, PieceColor.Black): 'k'
+        }
+
+        return piece_to_char.get((self.piece_type, self.piece_color), '?')
 
 
 
@@ -157,15 +203,30 @@ initial_board = [
 # our game only needs to know the board and whose turn it is; we will later add castling rights, 
 # en passant target squares, move count, etc, but for now this is sufficient.
 class Game: 
-    # note that the board here is a simple 2D array with no out-of-bounds checks at all. 
-    # later we will enforce this, and if we are looking to really get fast, we should 
-    # consider changing the fundamental data structure to something like a tree.
-    def __init__(self, board: list[list[Piece | None]] = initial_board, side_to_move: PieceColor = PieceColor.White):
-        self.board = board
-        self.side_to_move = side_to_move
-    
+    # note that the board here is read in as FEN representation. There are no bounds checks,
+    # later we will enforce this. Also, it's just a 2D array. If we are looking to really get 
+    # fast, we should consider changing the fundamental data structure to something like a tree.
+    def __init__(self, fen: str="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"):
+        rows = fen.split("/")   
+        self.side_to_move = (PieceColor.White if rows[1] == 'w' else PieceColor.Black)
+
+        self.board = [[0 for _ in range(8)] for _ in range(8)]
+
+        # populate the game board
+        for row in range(1, 9):
+            current_column = 1
+            for character in rows[row]:
+                # if there is a number, there is an n-square gap in the row
+                if character in ['1', '2', '3', '4', '5', '6', '7', '8']:
+                    current_column += int(character)
+                
+                # otherwise, parse the piece and add it to the board
+                else:
+                    self.board[8-row, current_column] = Piece.from_character(character)
+                    current_column += 1
 
 
+    # pretty printing
     def __str__(self) -> str:
         s = ""
         if self.side_to_move == PieceColor.White: 
@@ -267,6 +328,31 @@ class Game:
 
         # change back the player to move 
         self.side_to_move = self.side_to_move.opponent()
+
+
+    # converts to a fen string (some issues with last few bits but board/side is accurate)
+    def to_fen(self) -> str:
+        fen = ""
+
+        # boards
+        for row in range(7, -1, -1):
+            column_offset = 0
+            for column in range(1, 9):
+                if self.board[row, column]:
+                    if column_offset != 0: fen += str(column_offset)
+                    fen += Piece.to_character(self.board[row, column])
+                    column_offset = 0
+                else:
+                    column_offset += 1
+
+            if column_offset != 0: fen += str(column_offset)
+            if row != 1: fen += "/"
+
+        # player
+        fen += " " + ("w" if self.player_to_move == PieceColor.White else "b")
+        fen += " - - 0 1"
+        return fen
+
 
 
 # ---------------------------------------------------------------------------------------------------------------------
