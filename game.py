@@ -26,7 +26,7 @@ class Game:
         self.fullmove_number: int = int(splitted[5])
 
         rows = splitted[0].split('/')
-        self.board = [[0 for _ in range(8)] for _ in range(8)]
+        self.board = [[None for _ in range(8)] for _ in range(8)]
 
         # populate the game board
         for row in range(8):
@@ -191,8 +191,8 @@ class Game:
         
         for row in range(0, 8):
             for col in range(0, 8):
-                if self.board[row][col] is not None:
-                    piece = self.board[row][col]
+                piece = self.board[row][col]
+                if piece is not None:
                     if piece.piece_color == self.side_to_move:
                         all_legal_moves += self.get_piece_legal_moves((row, col))
 
@@ -219,13 +219,13 @@ class Game:
     # unmakes a move on the given board, replacing the captured piece.
     def un_make_move(self, move: Move, captured_piece: Piece | None):
         # "pick up" the moving piece at the END location
-        moving_piece = self.board[move.end_pos[1]][move.end_pos[0]]
-
-        # put the captured piece at the END location
-        self.board[move.end_pos[1]][move.end_pos[0]] = captured_piece
+        moving_piece = self.board[move.end_pos[0]][move.end_pos[1]]
 
         # "put down" the moving piece at the START location
-        self.board[move.start_pos[1]][move.start_pos[0]] = moving_piece
+        self.board[move.start_pos[0]][move.start_pos[1]] = moving_piece
+
+        # put the captured piece at the END location
+        self.board[move.end_pos[0]][move.end_pos[1]] = captured_piece
 
         # change back the player to move 
         self.side_to_move = self.side_to_move.opponent()

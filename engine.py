@@ -32,13 +32,4 @@ def get_best_move(game: Game, depth: int) -> tuple[Move | None, int]:
         # finally, unmake the move using the captured piece from earlier, returning the game to its original state.
         game.un_make_move(move, captured_piece)
 
-
     return best_move_and_evaluation
-
-
-initial_game = Game()
-
-print(initial_game.board[0][2])
-
-
-print(get_best_move(initial_game, 3))
