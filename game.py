@@ -12,14 +12,25 @@ class Game:
     # later we will enforce this. Also, it's just a 2D array. If we are looking to really get 
     # fast, we should consider changing the fundamental data structure to something like a tree.
     def __init__(self, fen: str="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"):
-        rows = fen.split("/")   
-        self.side_to_move = (PieceColor.White if rows[1] == 'w' else PieceColor.Black)
+        splitted = fen.split(' ')
+        self.side_to_move = (PieceColor.White if splitted[1] == 'w' else PieceColor.Black)
 
+        self.white_castle_kingside: bool = 'K' in splitted[2]
+        self.white_castle_queenside: bool = 'Q' in splitted[2]
+        self.black_castle_kingside: bool = 'k' in splitted[2]
+        self.black_castle_queenside: bool = 'q' in splitted[2]
+
+        self.en_passant_target_square: str = splitted[3] # should change to Piece but i'm lazy
+
+        self.halfmove_clock: int = int(splitted[4])
+        self.fullmove_number: int = int(splitted[5])
+
+        rows = splitted[0].split('/')
         self.board = [[0 for _ in range(8)] for _ in range(8)]
 
         # populate the game board
-        for row in range(1, 9):
-            current_column = 1
+        for row in range(8):
+            current_column = 0
             for character in rows[row]:
                 # if there is a number, there is an n-square gap in the row
                 if character in ['1', '2', '3', '4', '5', '6', '7', '8']:
@@ -27,7 +38,7 @@ class Game:
                 
                 # otherwise, parse the piece and add it to the board
                 else:
-                    self.board[8-row, current_column] = Piece.from_character(character)
+                    self.board[7-row][current_column] = Piece.from_character(character)
                     current_column += 1
 
 
@@ -174,7 +185,6 @@ class Game:
         return legal_moves
         
 
-
     # heavy lifting function here, gets all legal moves in the current position. simple enough implementation though.
     def get_all_legal_moves(self) -> list[Move]:
         all_legal_moves = []
@@ -223,25 +233,42 @@ class Game:
 
     # converts to a fen string (some issues with last few bits but board/side is accurate)
     def to_fen(self) -> str:
-        fen = ""
+        board = ""
 
         # boards
         for row in range(7, -1, -1):
             column_offset = 0
-            for column in range(1, 9):
-                if self.board[row, column]:
-                    if column_offset != 0: fen += str(column_offset)
-                    fen += Piece.to_character(self.board[row, column])
+            for column in range(0, 8):
+                if self.board[row][column]:
+                    if column_offset != 0: board += str(column_offset)
+                    board += Piece.to_character(self.board[row][column])
                     column_offset = 0
                 else:
                     column_offset += 1
 
-            if column_offset != 0: fen += str(column_offset)
-            if row != 1: fen += "/"
+            if column_offset != 0: board += str(column_offset)
+            if row != 0: board += "/"
 
         # player
-        fen += " " + ("w" if self.player_to_move == PieceColor.White else "b")
-        fen += " - - 0 1"
-        return fen
+        side = ("w" if self.side_to_move == PieceColor.White else "b")
+        
+        # castling
+        castling_rights = []
+        if self.white_castle_kingside:
+            castling_rights.append('K')
+        if self.white_castle_queenside:
+            castling_rights.append('Q')
+        if self.black_castle_kingside:
+            castling_rights.append('k')
+        if self.black_castle_queenside:
+            castling_rights.append('q')
+        castle = ''.join(castling_rights) or '-'
+    
+        # en passant target square
+        en_passant = self.en_passant_target_square or '-'
 
+        # move numbers
+        halfmove = str(self.halfmove_clock)
+        fullmove = str(self.fullmove_number)
 
+        return " ".join([board, side, castle, en_passant, halfmove, fullmove])
