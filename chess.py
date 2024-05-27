@@ -75,6 +75,11 @@ class Piece:
     # for easy printing
     def __str__(self):
         return f'{self.piece_color.name} {self.piece_type.name}'
+    
+
+    def is_not_friendly_piece(self, other_piece) -> bool:
+        if not other_piece: return True
+        return other_piece.piece_color != self.piece_color
 
 
     # returns a unicode string of the piece for board printing
@@ -115,7 +120,7 @@ class Move:
     @staticmethod
     def position_to_notation(position: tuple[int, int]) -> str:
         col, row = position
-        return chr(col + ord('a')) + str(row + 1)
+        return chr(row + ord('a')) + str(col + 1)
 
 
 
@@ -204,35 +209,121 @@ class Game:
 
 
     # we might consider moving this function somewhere else, but for now it's fine here.
-    def get_piece_legal_moves(self, piece: Piece) -> list[Move]:
+    # i hating writing these, so for now we are good but this can be optimized
+    def get_piece_legal_moves(self, location: tuple[int, int]) -> list[Move]:
         legal_moves = []
 
-        # # i despise writing these and thus i refuse to do it
-        # if piece.piece_type == PieceType.Pawn:
-        #     # todo
-        # elif piece.piece_type == PieceType.Bishop:
-        #     # todo
-        # elif piece.piece_type == PieceType.Knight:
-        #     # todo
-        # elif piece.piece_type == PieceType.Rook:
-        #     # todo
-        # elif piece.piece_type == PieceType.Queen:
-        #     # todo
-        # elif piece.piece_type == PieceType.King:
-        #     # todo
+        row, col = location
+        piece = self.board[row][col]
+        if not piece: return []
+
+        # pawn
+        if piece.piece_type == PieceType.Pawn:
+            if piece.piece_color == PieceColor.White:
+                # first push
+                if not self.board[row+1][col]:
+                    legal_moves.append(Move(location, (row+1, col)))
+                    
+                    # second push if on the start row
+                    if row == 1 and not self.board[row+2][col]:
+                        legal_moves.append(Move(location, (row+2, col)))
+
+            else:
+                # first push
+                if not self.board[row-1][col]:
+                    legal_moves.append(Move(location, (row-1, col)))
+                    
+                    # second push if on the start row
+                    if row == 6 and not self.board[row-2][col]:
+                        legal_moves.append(Move(location, (row-2, col)))
+
+
+        # bishop
+        elif piece.piece_type == PieceType.Bishop:
+            offsets = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
+
+            # check all offset directions
+            for offset in offsets:
+                # start square
+                curr_row, curr_col = row+offset[0], col+offset[1]
+                
+                # while there is nothing in the way, keep adding the moves until we hit something (or out of bounds)
+                while 0 <= curr_row < 8 and 0 <= curr_col < 8 and piece.is_not_friendly_piece(self.board[curr_row][curr_col]):
+                    legal_moves.append(Move(location, (curr_row, curr_col)))
+                    curr_row += offset[0]
+                    curr_col += offset[1]
+
+
+        # knight
+        elif piece.piece_type == PieceType.Knight:
+            offsets = [(2,1), (1,2), (-1,2), (-2,1), (-2,-1), (-1,-2), (1,-2), (2,-1)]
+
+            for offset in offsets:
+                curr_row, curr_col = row+offset[0], col+offset[1]
+
+                # quick bounds/friendly piece check (no path checking here)
+                if  0 <= curr_row < 8 and 0 <= curr_col < 8 and piece.is_not_friendly_piece(self.board[curr_row][curr_col]):
+                    legal_moves.append(Move(location, (curr_row, curr_col)))
+
+       
+        # rooks
+        elif piece.piece_type == PieceType.Rook:
+            offsets = [(-1, 0), (0, -1), (1, 0), (0, 1)]
+            
+            # check all offset directions
+            for offset in offsets:
+                # start square
+                curr_row, curr_col = row+offset[0], col+offset[1]
+                
+                # while there is nothing in the way, keep adding the moves until we hit something (or out of bounds)
+                while 0 <= curr_row < 8 and 0 <= curr_col < 8 and piece.is_not_friendly_piece(self.board[curr_row][curr_col]):
+                    legal_moves.append(Move(location, (curr_row, curr_col)))
+                    curr_row += offset[0]
+                    curr_col += offset[1]
+
+
+        # queen
+        elif piece.piece_type == PieceType.Queen:
+            offsets = [(-1, -1), (-1, 1), (1, -1), (1, 1), (-1, 0), (0, -1), (1, 0), (0, 1)]
+            
+            # check all offset directions
+            for offset in offsets:
+                # start square
+                curr_row, curr_col = row+offset[0], col+offset[1]
+                
+                # while there is nothing in the way, keep adding the moves until we hit something (or out of bounds)
+                while 0 <= curr_row < 8 and 0 <= curr_col < 8 and piece.is_not_friendly_piece(self.board[curr_row][curr_col]):
+                    legal_moves.append(Move(location, (curr_row, curr_col)))
+                    curr_row += offset[0]
+                    curr_col += offset[1]
+
+
+        # king
+        elif piece.piece_type == PieceType.King:
+            offsets = [(-1, -1), (-1, 1), (1, -1), (1, 1), (-1, 0), (0, -1), (1, 0), (0, 1)]
+
+            for offset in offsets:
+                curr_row, curr_col = row+offset[0], col+offset[1]
+
+                # quick bounds/friendly piece check (no path checking here)
+                if  0 <= curr_row < 8 and 0 <= curr_col < 8 and piece.is_not_friendly_piece(self.board[curr_row][curr_col]):
+                    legal_moves.append(Move(location, (curr_row, curr_col)))
+
 
         return legal_moves
         
+
 
     # heavy lifting function here, gets all legal moves in the current position. simple enough implementation though.
     def get_all_legal_moves(self) -> list[Move]:
         all_legal_moves = []
         
-        for row in self.board:
-            for piece in row:
-                if piece is not None:
+        for row in range(0, 8):
+            for col in range(0, 8):
+                if self.board[row][col] is not None:
+                    piece = self.board[row][col]
                     if piece.piece_color == self.side_to_move:
-                        all_legal_moves += self.get_piece_legal_moves(piece)
+                        all_legal_moves += self.get_piece_legal_moves((row, col))
 
         return all_legal_moves
     
@@ -257,13 +348,13 @@ class Game:
     # unmakes a move on the given board, replacing the captured piece.
     def un_make_move(self, move: Move, captured_piece: Piece | None):
         # "pick up" the moving piece at the END location
-        moving_piece = self.board[move.end_pos[1], move.end_pos[0]]
+        moving_piece = self.board[move.end_pos[1]][move.end_pos[0]]
 
         # put the captured piece at the END location
-        self.board[move.end_pos[1], move.end_pos[0]] = captured_piece
+        self.board[move.end_pos[1]][move.end_pos[0]] = captured_piece
 
         # "put down" the moving piece at the START location
-        self.board[move.start_pos[1], move.start_pos[0]] = moving_piece
+        self.board[move.start_pos[1]][move.start_pos[0]] = moving_piece
 
         # change back the player to move 
         self.side_to_move = self.side_to_move.opponent()
@@ -280,7 +371,7 @@ def get_best_move(game: Game, depth: int) -> tuple[Move | None, int]:
     if depth <= 0: return (None, game.evaluate_board_material()) # returning none looks counterintuitive, but hear me out
 
     # start off with the worst possible case
-    best_move_and_evaluation = (None, -100000) if game.player_to_move == PieceColor.White else (None, 100000)
+    best_move_and_evaluation = (None, -100000) if game.side_to_move == PieceColor.White else (None, 100000)
 
     for move in game.get_all_legal_moves():
         # first, make the move and save the captured piece for later
@@ -306,5 +397,7 @@ def get_best_move(game: Game, depth: int) -> tuple[Move | None, int]:
 
 initial_game = Game()
 
-print(initial_game)
+print(initial_game.board[0][2])
 
+
+print(get_best_move(initial_game, 3))
