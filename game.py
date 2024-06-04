@@ -272,3 +272,73 @@ class Game:
         fullmove = str(self.fullmove_number)
 
         return " ".join([board, side, castle, en_passant, halfmove, fullmove])
+
+
+    # converts the board into a 3D matrix which is readable by a CNN.
+    def to_cnn_representation(self) -> list[list[list[int]]]:
+        rep = []
+
+        piece_types = [
+            Piece(PieceType.Pawn, PieceColor.White),
+            Piece(PieceType.Rook, PieceColor.White),
+            Piece(PieceType.Knight, PieceColor.White),
+            Piece(PieceType.Bishop, PieceColor.White),
+            Piece(PieceType.Queen, PieceColor.White),
+            Piece(PieceType.King, PieceColor.White),
+            Piece(PieceType.Pawn, PieceColor.Black),
+            Piece(PieceType.Rook, PieceColor.Black),
+            Piece(PieceType.Knight, PieceColor.Black),
+            Piece(PieceType.Bishop, PieceColor.Black),
+            Piece(PieceType.Queen, PieceColor.Black),
+            Piece(PieceType.King, PieceColor.Black)
+        ]
+
+        # a matrix for the location of every piece type
+        for piece_type in piece_types:
+            rep.append([[1 if piece_type.matches(piece) else 0 for piece in row] for row in self.board])
+        
+
+        # a matrix for where white has legal moves and where black has legal moves
+        
+        # if it's white's turn, do a quick piececolor switch when doing black
+        if self.side_to_move == PieceColor.White:
+            white_matrix = [[0 for _ in range(8)] for _ in range(8)]
+            legal_moves = self.get_all_legal_moves()
+            for move in legal_moves:
+                end_row, end_col = move.end_pos[0], move.end_pos[1]
+                white_matrix[end_row][end_col] = 1
+            rep.append(white_matrix)
+
+            # a matrix for where black can move
+            black_matrix = [[0 for _ in range(8)] for _ in range(8)]
+            self.side_to_move == PieceColor.Black
+            legal_moves = self.get_all_legal_moves()
+            self.side_to_move == PieceColor.White
+            for move in legal_moves:
+                end_row, end_col = move.end_pos[0], move.end_pos[1]
+                black_matrix[end_row][end_col] = 1
+            rep.append(black_matrix)
+
+
+        # if it's black's turn, do a quick piececolor switch when doing white
+        else:
+            white_matrix = [[0 for _ in range(8)] for _ in range(8)]
+            self.side_to_move == PieceColor.White
+            legal_moves = self.get_all_legal_moves()
+            self.side_to_move == PieceColor.Black
+            for move in legal_moves:
+                end_row, end_col = move.end_pos[0], move.end_pos[1]
+                white_matrix[end_row][end_col] = 1
+            rep.append(white_matrix)
+
+            # a matrix for where black can move
+            black_matrix = [[0 for _ in range(8)] for _ in range(8)]
+            self.side_to_move == PieceColor.Black
+            legal_moves = self.get_all_legal_moves()
+            self.side_to_move == PieceColor.White
+            for move in legal_moves:
+                end_row, end_col = move.end_pos[0], move.end_pos[1]
+                black_matrix[end_row][end_col] = 1
+            rep.append(black_matrix)
+
+        return rep

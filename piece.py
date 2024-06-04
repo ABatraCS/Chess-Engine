@@ -137,3 +137,8 @@ class Piece:
 
         return piece_to_char.get((self.piece_type, self.piece_color), '?')
 
+
+    # returns true if matches both color and type
+    def matches(self, other_piece):
+        if not other_piece: return False
+        return self.piece_color == other_piece.piece_color and self.piece_type == other_piece.piece_type
