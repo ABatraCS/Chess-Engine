@@ -7,9 +7,10 @@ from game import Game
 
 
 # returns the best move and the current evaluation. no optimizations, pure search. best depth is probably 4.
-def get_best_move(game: Game, depth: int) -> tuple[Move | None, int]:
+def brute_force_best_move(game: Game, depth: int) -> tuple[Move | None, int]:
     # base case evaluates the material on the board
-    if depth <= 0: return (None, game.evaluate_board_material()) # returning none looks counterintuitive, but hear me out
+    if depth <= 0: 
+        return (None, game.evaluate_board_material()) # returning none looks counterintuitive, but hear me out
 
     # start off with the worst possible case
     best_move_and_evaluation = (None, -100000) if game.side_to_move == PieceColor.White else (None, 100000)
@@ -19,7 +20,7 @@ def get_best_move(game: Game, depth: int) -> tuple[Move | None, int]:
         captured_piece = game.make_move(move)
 
         # now make a recursive call to get the best move for this current game branch
-        best_this_branch = get_best_move(game, depth - 1)
+        best_this_branch = brute_force_best_move(game, depth - 1)
 
         # if we find a move with a better rating than what we currently have, replace the current move.
         # "better rating" is more positive for white, more negative for black. however,

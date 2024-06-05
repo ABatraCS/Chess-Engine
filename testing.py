@@ -7,7 +7,7 @@ from game import *
 
 
 # solves puzzles from a csv filepath, quite a lot is assumed here
-def solve_puzzles(filepath: str, num_puzzles: int = 50):
+def solve_puzzles(filepath: str, num_puzzles: int = 50, depth=3):
     with open(filepath, 'r') as file:
         csvreader = csv.reader(file)
         next(csvreader) # header
@@ -24,17 +24,17 @@ def solve_puzzles(filepath: str, num_puzzles: int = 50):
             if count > num_puzzles: break
 
             fen, best_move, rating = row[1], row[2], int(row[3])
-            print(rating, "...", end=' ')
+            print(rating, "...", end=' ', flush=True)
 
             # get best move
-            generated_move, _ = get_best_move(Game(fen), 3)
+            generated_move, _ = brute_force_best_move(Game(fen), depth)
 
             # determine result
             if best_move == str(generated_move):
-                print('solved!', end=' ')
+                print('solved! \t', end=' ')
                 did_solve = 1
             else:
-                print('no.    ', end=' ')
+                print('no.     \t', end=' ')
                 did_solve = 0
 
             # calculate the elo from the result
@@ -51,4 +51,4 @@ def solve_puzzles(filepath: str, num_puzzles: int = 50):
         print("Estimated engine ELO:", round(elo), "\n\n")
 
 
-solve_puzzles("lichess_db_puzzle_500_modified.csv")
+solve_puzzles("lichess_db_puzzle_with_stockfish_eval.csv", num_puzzles=50, depth=3)

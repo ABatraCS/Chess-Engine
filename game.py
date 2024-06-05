@@ -122,6 +122,10 @@ class Game:
                 # while there is nothing in the way, keep adding the moves until we hit something (or out of bounds)
                 while 0 <= curr_row < 8 and 0 <= curr_col < 8 and piece.is_not_friendly_piece(self.board[curr_row][curr_col]):
                     legal_moves.append(Move(location, (curr_row, curr_col)))
+                    
+                    # stop the path once we run into a piece. note that we add the piece if it's not friendly (i.e. we can take it)
+                    if self.board[curr_row][curr_col]: break
+
                     curr_row += offset[0]
                     curr_col += offset[1]
 
@@ -150,6 +154,10 @@ class Game:
                 # while there is nothing in the way, keep adding the moves until we hit something (or out of bounds)
                 while 0 <= curr_row < 8 and 0 <= curr_col < 8 and piece.is_not_friendly_piece(self.board[curr_row][curr_col]):
                     legal_moves.append(Move(location, (curr_row, curr_col)))
+                    
+                    # stop the path once we run into a piece. note that we add the piece if it's not friendly (i.e. we can take it)
+                    if self.board[curr_row][curr_col]: break
+
                     curr_row += offset[0]
                     curr_col += offset[1]
 
@@ -166,6 +174,10 @@ class Game:
                 # while there is nothing in the way, keep adding the moves until we hit something (or out of bounds)
                 while 0 <= curr_row < 8 and 0 <= curr_col < 8 and piece.is_not_friendly_piece(self.board[curr_row][curr_col]):
                     legal_moves.append(Move(location, (curr_row, curr_col)))
+
+                    # stop the path once we run into a piece. note that we add the piece if it's not friendly (i.e. we can take it)
+                    if self.board[curr_row][curr_col]: break
+                    
                     curr_row += offset[0]
                     curr_col += offset[1]
 
