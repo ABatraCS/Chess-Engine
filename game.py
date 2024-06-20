@@ -264,52 +264,66 @@ class Game:
     # also updates the zobrist hash based on the new game state.
     def make_move(self, move: Move) -> Piece | None:
         captured_piece = self.board[move.end_pos[0]][move.end_pos[1]]
+        if captured_piece: self.zobrist_hash = self.zobrist_hash ^ self.zobrist_table[move.end_pos[0]*64 + move.end_pos[1]*12 + captured_piece.zobrist_index()]
+
         moving_piece = self.board[move.start_pos[0]][move.start_pos[1]]
 
         # handle promotions
         if move.promotion != 0:
-            self.board[move.end_pos[0]][move.end_pos[1]] = Piece(Move.promotion_to_piecetype(move.promotion), moving_piece.piece_color)
+            promoted_piece = Piece(Move.promotion_to_piecetype(move.promotion), moving_piece.piece_color)
+            self.board[move.end_pos[0]][move.end_pos[1]] = promoted_piece
+            self.zobrist_hash = self.zobrist_hash ^ self.zobrist_table[move.end_pos[0]*64 + move.end_pos[1]*12 + promoted_piece.zobrist_index()] 
 
         # move the moving piece to the end location
         else:
             self.board[move.end_pos[0]][move.end_pos[1]] = moving_piece
+            self.zobrist_hash = self.zobrist_hash ^ self.zobrist_table[move.end_pos[0]*64 + move.end_pos[1]*12 + moving_piece.zobrist_index()]
         
         # remove the moving piece from the start location
         self.board[move.start_pos[0]][move.start_pos[1]] = None
-
+        self.zobrist_hash = self.zobrist_hash ^ self.zobrist_table[move.start_pos[0]*64 + move.start_pos[1]*12 + moving_piece.zobrist_index()]
 
         # handling castling, specifically moving the rook
         # white kingside
         if moving_piece.matches(Piece(PieceType.King, PieceColor.White)) and move.start_pos == (0, 4) and move.end_pos == (0, 6):
             rook = self.board[0][7]
             self.board[0][5] = rook
+            self.zobrist_hash = self.zobrist_hash ^ self.zobrist_table[0*64 + 5*12 + rook.zobrist_index()]
             self.board[0][7] = None
+            self.zobrist_hash = self.zobrist_hash ^ self.zobrist_table[0*64 + 7*12 + rook.zobrist_index()]
             self.white_castle_kingside = False
         
         # white queenside
         elif moving_piece.matches(Piece(PieceType.King, PieceColor.White)) and move.start_pos == (0, 4) and move.end_pos == (0, 2):
             rook = self.board[0][0]
             self.board[0][3] = rook
+            self.zobrist_hash = self.zobrist_hash ^ self.zobrist_table[0*64 + 3*12 + rook.zobrist_index()]
             self.board[0][0] = None
+            self.zobrist_hash = self.zobrist_hash ^ self.zobrist_table[0*64 + 0*12 + rook.zobrist_index()]
             self.white_castle_queenside = False
 
         # black kingside
         elif moving_piece.matches(Piece(PieceType.King, PieceColor.Black)) and move.start_pos == (7, 4) and move.end_pos == (7, 6):
             rook = self.board[7][7]
             self.board[7][5] = rook
+            self.zobrist_hash = self.zobrist_hash ^ self.zobrist_table[7*64 + 5*12 + rook.zobrist_index()]
             self.board[7][7] = None
+            self.zobrist_hash = self.zobrist_hash ^ self.zobrist_table[7*64 + 7*12 + rook.zobrist_index()]
             self.black_castle_kingside = False
 
         # black queenside
         elif moving_piece.matches(Piece(PieceType.King, PieceColor.Black)) and move.start_pos == (7, 4) and move.end_pos == (7, 2):
             rook = self.board[7][0]
             self.board[7][3] = rook
+            self.zobrist_hash = self.zobrist_hash ^ self.zobrist_table[7*64 + 3*12 + rook.zobrist_index()]
             self.board[7][0] = None
+            self.zobrist_hash = self.zobrist_hash ^ self.zobrist_table[7*64 + 0*12 + rook.zobrist_index()]
             self.black_castle_queenside = False
 
 
         # flip the side to move
         self.side_to_move = self.side_to_move.opponent()
+        self.zobrist_hash = self.zobrist_hash ^ self.zobrist_table[-1]
 
         return captured_piece
 
@@ -322,47 +336,60 @@ class Game:
 
         # handling un-promotions
         if move.promotion != 0:
-            self.board[move.start_pos[0]][move.start_pos[1]] = Piece(PieceType.Pawn, moving_piece.piece_color)
+            pawn = Piece(PieceType.Pawn, moving_piece.piece_color)
+            self.board[move.start_pos[0]][move.start_pos[1]] = pawn
+            self.zobrist_hash = self.zobrist_hash ^ self.zobrist_table[move.start_pos[0]*64 + move.start_pos[1]*12 + pawn.zobrist_index()]
         else:
             # "put down" the moving piece at the START location
             self.board[move.start_pos[0]][move.start_pos[1]] = moving_piece
+            self.zobrist_hash = self.zobrist_hash ^ self.zobrist_table[move.start_pos[0]*64 + move.start_pos[1]*12 + moving_piece.zobrist_index()]
 
         # put the captured piece at the END location
-        self.board[move.end_pos[0]][move.end_pos[1]] = captured_piece
-
+        if captured_piece:
+            self.board[move.end_pos[0]][move.end_pos[1]] = captured_piece
+            self.zobrist_hash = self.zobrist_hash ^ self.zobrist_table[move.end_pos[0]*64 + move.end_pos[1]*12 + captured_piece.zobrist_index()]
 
         # handling castling, specifically moving the rook back
         # white kingside
         if moving_piece.matches(Piece(PieceType.King, PieceColor.White)) and move.start_pos == (0, 4) and move.end_pos == (0, 6):
             rook = self.board[0][5]
             self.board[0][7] = rook
+            self.zobrist_hash = self.zobrist_hash ^ self.zobrist_table[0*64 + 7*12 + rook.zobrist_index()]
             self.board[0][5] = None
+            self.zobrist_hash = self.zobrist_hash ^ self.zobrist_table[0*64 + 5*12 + rook.zobrist_index()]
             self.white_castle_kingside = False
         
         # white queenside
         elif moving_piece.matches(Piece(PieceType.King, PieceColor.White)) and move.start_pos == (0, 4) and move.end_pos == (0, 2):
             rook = self.board[0][3]
             self.board[0][0] = rook
+            self.zobrist_hash = self.zobrist_hash ^ self.zobrist_table[0*64 + 0*12 + rook.zobrist_index()]
             self.board[0][3] = None
+            self.zobrist_hash = self.zobrist_hash ^ self.zobrist_table[0*64 + 3*12 + rook.zobrist_index()]
             self.white_castle_queenside = False
 
         # black kingside
         elif moving_piece.matches(Piece(PieceType.King, PieceColor.Black)) and move.start_pos == (7, 4) and move.end_pos == (7, 6):
             rook = self.board[7][5]
             self.board[7][7] = rook
+            self.zobrist_hash = self.zobrist_hash ^ self.zobrist_table[7*64 + 7*12 + rook.zobrist_index()]
             self.board[7][5] = None
+            self.zobrist_hash = self.zobrist_hash ^ self.zobrist_table[7*64 + 5*12 + rook.zobrist_index()]
             self.black_castle_kingside = False
 
         # black queenside
         elif moving_piece.matches(Piece(PieceType.King, PieceColor.Black)) and move.start_pos == (7, 4) and move.end_pos == (7, 2):
             rook = self.board[7][3]
             self.board[7][0] = rook
+            self.zobrist_hash = self.zobrist_hash ^ self.zobrist_table[7*64 + 0*12 + rook.zobrist_index()]
             self.board[7][3] = None
+            self.zobrist_hash = self.zobrist_hash ^ self.zobrist_table[7*64 + 3*12 + rook.zobrist_index()]
             self.black_castle_queenside = False
 
 
         # change back the player to move 
         self.side_to_move = self.side_to_move.opponent()
+        self.zobrist_hash = self.zobrist_hash ^ self.zobrist_table[-1]
 
 
     # converts to a fen string (some issues with last few bits but board/side is accurate)
