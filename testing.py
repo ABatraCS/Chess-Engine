@@ -1,13 +1,13 @@
 # engine strength testing.
 
 
-import csv
+import csv, random, time
 from engine import * 
 from game import *
 
 
 # solves puzzles from a csv filepath, quite a lot is assumed here
-def solve_puzzles(filepath: str, num_puzzles: int = 50, depth=3):
+def solve_puzzles(filepath: str, num_puzzles: int = 20, depth=3):
     with open(filepath, 'r') as file:
         csvreader = csv.reader(file)
         next(csvreader) # header
@@ -19,9 +19,15 @@ def solve_puzzles(filepath: str, num_puzzles: int = 50, depth=3):
         kfactor = 500           # max amount gained/lost in a given round (decays over time)
         highest_problem_solved = 0
 
-        for row in csvreader:
+        start = time.time()
+
+        for _ in range(num_puzzles):
             count += 1
-            if count > num_puzzles: break
+            
+            for _ in range(random.randint(10, 50)):
+                next(csvreader)
+
+            row = next(csvreader)
 
             fen, best_move, rating = row[1], row[2], int(row[3])
             print(rating, "...", end=' ', flush=True)
@@ -46,9 +52,9 @@ def solve_puzzles(filepath: str, num_puzzles: int = 50, depth=3):
         
         # results
         print("\n\n--------------------RESULTS--------------------")
-        print(num_puzzles, "puzzles attempted,", num_correct, "correct,", num_puzzles-num_correct, "incorrect")
+        print(num_puzzles, "puzzles attempted,", num_correct, "correct,", num_puzzles-num_correct, "incorrect in", str(round(time.time()-start, 1)), "seconds")
         print("Highest problem solved:", highest_problem_solved)
         print("Estimated engine ELO:", round(elo), "\n\n")
 
 
-solve_puzzles("lichess_db_puzzle_with_stockfish_eval.csv", num_puzzles=50, depth=3)
+solve_puzzles("lichess_db_puzzle_with_stockfish_eval.csv", num_puzzles=20, depth=4)

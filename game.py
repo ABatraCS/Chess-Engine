@@ -451,15 +451,3 @@ class Game:
             rep.append(black_matrix)
 
         return rep
-
-
-g = Game("r3k2r/8/8/8/8/8/8/R3K2R b KQkq - 0 1")
-print(g)
-
-for move in g.get_all_legal_moves():
-    if str(move) == "e8c8" or str(move) == "e8g8":
-        print(move)
-        c = g.make_move(move)
-        print(g)
-        g.un_make_move(move, c)
-        print(g)
