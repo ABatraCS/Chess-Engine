@@ -193,6 +193,25 @@ class Game:
                 if  0 <= curr_row < 8 and 0 <= curr_col < 8 and piece.is_not_friendly_piece(self.board[curr_row][curr_col]):
                     legal_moves.append(Move(location, (curr_row, curr_col)))
 
+            
+            # check castling rights. this involves knowing if it's legal to castle
+            if self.side_to_move == PieceColor.White:
+                if self.white_castle_kingside:
+                    if self.board[0][5] == None and self.board[0][6] == None:
+                        legal_moves.append(Move(location, (0, 6)))
+                if self.white_castle_queenside:
+                    if self.board[0][1] == None and self.board[0][2] == None and self.board[0][3] == None:
+                        legal_moves.append(Move(location, (0, 2)))
+
+            else:
+                if self.black_castle_kingside:
+                    if self.board[7][5] == None and self.board[7][6] == None:
+                        legal_moves.append(Move(location, (7, 6)))
+
+                if self.black_castle_queenside:
+                    if self.board[7][1] == None and self.board[7][2] == None and self.board[7][3] == None:
+                        legal_moves.append(Move(location, (7, 2)))
+
 
         return legal_moves
         
@@ -222,6 +241,37 @@ class Game:
         # remove the moving piece from the start location
         self.board[move.start_pos[0]][move.start_pos[1]] = None
 
+
+        # handling castling, specifically moving the rook
+        # white kingside
+        if moving_piece.matches(Piece(PieceType.King, PieceColor.White)) and move.start_pos == (0, 4) and move.end_pos == (0, 6):
+            rook = self.board[0][7]
+            self.board[0][5] = rook
+            self.board[0][7] = None
+            self.white_castle_kingside = False
+        
+        # white queenside
+        elif moving_piece.matches(Piece(PieceType.King, PieceColor.White)) and move.start_pos == (0, 4) and move.end_pos == (0, 2):
+            rook = self.board[0][7]
+            self.board[0][3] = rook
+            self.board[0][7] = None
+            self.white_castle_queenside = False
+
+        # blacl queenside
+        elif moving_piece.matches(Piece(PieceType.King, PieceColor.Black)) and move.start_pos == (7, 4) and move.end_pos == (7, 6):
+            rook = self.board[7][7]
+            self.board[7][5] = rook
+            self.board[7][7] = None
+            self.black_castle_kingside = False
+
+        # blacl kingside
+        elif moving_piece.matches(Piece(PieceType.King, PieceColor.Black)) and move.start_pos == (7, 4) and move.end_pos == (7, 2):
+            rook = self.board[7][7]
+            self.board[7][3] = rook
+            self.board[7][7] = None
+            self.black_castle_queenside = False
+
+
         # flip the side to move
         self.side_to_move = self.side_to_move.opponent()
 
@@ -238,6 +288,36 @@ class Game:
 
         # put the captured piece at the END location
         self.board[move.end_pos[0]][move.end_pos[1]] = captured_piece
+
+        # handling castling, specifically moving the rook back
+        # white kingside
+        if moving_piece.matches(Piece(PieceType.King, PieceColor.White)) and move.start_pos == (0, 4) and move.end_pos == (0, 6):
+            rook = self.board[0][5]
+            self.board[0][7] = rook
+            self.board[0][5] = None
+            self.white_castle_kingside = False
+        
+        # white queenside
+        elif moving_piece.matches(Piece(PieceType.King, PieceColor.White)) and move.start_pos == (0, 4) and move.end_pos == (0, 2):
+            rook = self.board[0][3]
+            self.board[0][7] = rook
+            self.board[0][3] = None
+            self.white_castle_queenside = False
+
+        # blacl queenside
+        elif moving_piece.matches(Piece(PieceType.King, PieceColor.Black)) and move.start_pos == (7, 4) and move.end_pos == (7, 6):
+            rook = self.board[7][5]
+            self.board[7][7] = rook
+            self.board[7][5] = None
+            self.black_castle_kingside = False
+
+        # blacl kingside
+        elif moving_piece.matches(Piece(PieceType.King, PieceColor.Black)) and move.start_pos == (7, 4) and move.end_pos == (7, 2):
+            rook = self.board[7][3]
+            self.board[7][7] = rook
+            self.board[7][3] = None
+            self.black_castle_queenside = False
+
 
         # change back the player to move 
         self.side_to_move = self.side_to_move.opponent()
