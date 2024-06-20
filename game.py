@@ -94,7 +94,11 @@ class Game:
             if piece.piece_color == PieceColor.White:
                 # first push
                 if not self.board[row+1][col]:
-                    legal_moves.append(Move(location, (row+1, col)))
+                    # check promotions
+                    if row+1 == 7: 
+                        legal_moves += [Move(location, (row+1, col), promotion=promotion_type) for promotion_type in [1, 2, 3, 4]]
+                    else:
+                        legal_moves.append(Move(location, (row+1, col)))
                     
                     # second push if on the start row
                     if row == 1 and not self.board[row+2][col]:
@@ -103,7 +107,10 @@ class Game:
             else:
                 # first push
                 if not self.board[row-1][col]:
-                    legal_moves.append(Move(location, (row-1, col)))
+                    if row-1 == 0: 
+                        legal_moves += [Move(location, (row-1, col), promotion=promotion_type) for promotion_type in [1, 2, 3, 4]]
+                    else:
+                        legal_moves.append(Move(location, (row-1, col)))
                     
                     # second push if on the start row
                     if row == 6 and not self.board[row-2][col]:
@@ -235,8 +242,13 @@ class Game:
         captured_piece = self.board[move.end_pos[0]][move.end_pos[1]]
         moving_piece = self.board[move.start_pos[0]][move.start_pos[1]]
 
+        # handle promotions
+        if move.promotion != 0:
+            self.board[move.end_pos[0]][move.end_pos[1]] = Piece(Move.promotion_to_piecetype(move.promotion), moving_piece.piece_color)
+
         # move the moving piece to the end location
-        self.board[move.end_pos[0]][move.end_pos[1]] = moving_piece
+        else:
+            self.board[move.end_pos[0]][move.end_pos[1]] = moving_piece
         
         # remove the moving piece from the start location
         self.board[move.start_pos[0]][move.start_pos[1]] = None
@@ -252,23 +264,23 @@ class Game:
         
         # white queenside
         elif moving_piece.matches(Piece(PieceType.King, PieceColor.White)) and move.start_pos == (0, 4) and move.end_pos == (0, 2):
-            rook = self.board[0][7]
+            rook = self.board[0][0]
             self.board[0][3] = rook
-            self.board[0][7] = None
+            self.board[0][0] = None
             self.white_castle_queenside = False
 
-        # blacl queenside
+        # black kingside
         elif moving_piece.matches(Piece(PieceType.King, PieceColor.Black)) and move.start_pos == (7, 4) and move.end_pos == (7, 6):
             rook = self.board[7][7]
             self.board[7][5] = rook
             self.board[7][7] = None
             self.black_castle_kingside = False
 
-        # blacl kingside
+        # black queenside
         elif moving_piece.matches(Piece(PieceType.King, PieceColor.Black)) and move.start_pos == (7, 4) and move.end_pos == (7, 2):
-            rook = self.board[7][7]
+            rook = self.board[7][0]
             self.board[7][3] = rook
-            self.board[7][7] = None
+            self.board[7][0] = None
             self.black_castle_queenside = False
 
 
@@ -283,11 +295,16 @@ class Game:
         # "pick up" the moving piece at the END location
         moving_piece = self.board[move.end_pos[0]][move.end_pos[1]]
 
-        # "put down" the moving piece at the START location
-        self.board[move.start_pos[0]][move.start_pos[1]] = moving_piece
+        # handling un-promotions
+        if move.promotion != 0:
+            self.board[move.start_pos[0]][move.start_pos[1]] = Piece(PieceType.Pawn, moving_piece.piece_color)
+        else:
+            # "put down" the moving piece at the START location
+            self.board[move.start_pos[0]][move.start_pos[1]] = moving_piece
 
         # put the captured piece at the END location
         self.board[move.end_pos[0]][move.end_pos[1]] = captured_piece
+
 
         # handling castling, specifically moving the rook back
         # white kingside
@@ -300,21 +317,21 @@ class Game:
         # white queenside
         elif moving_piece.matches(Piece(PieceType.King, PieceColor.White)) and move.start_pos == (0, 4) and move.end_pos == (0, 2):
             rook = self.board[0][3]
-            self.board[0][7] = rook
+            self.board[0][0] = rook
             self.board[0][3] = None
             self.white_castle_queenside = False
 
-        # blacl queenside
+        # black kingside
         elif moving_piece.matches(Piece(PieceType.King, PieceColor.Black)) and move.start_pos == (7, 4) and move.end_pos == (7, 6):
             rook = self.board[7][5]
             self.board[7][7] = rook
             self.board[7][5] = None
             self.black_castle_kingside = False
 
-        # blacl kingside
+        # black queenside
         elif moving_piece.matches(Piece(PieceType.King, PieceColor.Black)) and move.start_pos == (7, 4) and move.end_pos == (7, 2):
             rook = self.board[7][3]
-            self.board[7][7] = rook
+            self.board[7][0] = rook
             self.board[7][3] = None
             self.black_castle_queenside = False
 
@@ -434,3 +451,15 @@ class Game:
             rep.append(black_matrix)
 
         return rep
+
+
+g = Game("r3k2r/8/8/8/8/8/8/R3K2R b KQkq - 0 1")
+print(g)
+
+for move in g.get_all_legal_moves():
+    if str(move) == "e8c8" or str(move) == "e8g8":
+        print(move)
+        c = g.make_move(move)
+        print(g)
+        g.un_make_move(move, c)
+        print(g)
