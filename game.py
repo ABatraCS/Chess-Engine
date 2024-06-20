@@ -1,6 +1,7 @@
 # class representation of a game
 
 
+import random
 from piece import *
 from move import Move
 
@@ -41,6 +42,9 @@ class Game:
                     self.board[7-row][current_column] = Piece.from_character(character)
                     current_column += 1
 
+        self.zobrist_table = [random.getrandbits(64) for _ in range(768+1)] # 768 = pieces on square, 4 = castling rights, 1 = side to move. no EP target square = todo
+        self.zobrist_hash = self.hash()
+
 
     # pretty printing
     def __str__(self) -> str:
@@ -67,6 +71,25 @@ class Game:
         s += "      A   B   C   D   E   F   G   H   \n"
 
         return s
+
+
+    # gets the zobrist hash for a given board state (unique 64-bit int).
+    # this is used for a transposition table during engine eval (dp)
+    def hash(self) -> int:
+        hash = 0
+        
+        # each piece on each square
+        for row in range(8):
+            for col in range(8):
+                piece = self.board[row][col]
+                if piece:
+                    hash = hash ^ self.zobrist_table[row*64 + col*12 + piece.zobrist_index()]
+
+        # side to move
+        if self.side_to_move == PieceColor.Black:
+            hash = hash ^ self.zobrist_table[-1]
+
+        return hash
 
 
     # here is our evaluation function. note that it is as simple as it gets.
@@ -238,6 +261,7 @@ class Game:
     
 
     # makes a move on the given board, returns a captured piece if any.
+    # also updates the zobrist hash based on the new game state.
     def make_move(self, move: Move) -> Piece | None:
         captured_piece = self.board[move.end_pos[0]][move.end_pos[1]]
         moving_piece = self.board[move.start_pos[0]][move.start_pos[1]]
@@ -291,6 +315,7 @@ class Game:
 
 
     # unmakes a move on the given board, replacing the captured piece.
+    # also reverts the zobrist hash made by the move.
     def un_make_move(self, move: Move, captured_piece: Piece | None):
         # "pick up" the moving piece at the END location
         moving_piece = self.board[move.end_pos[0]][move.end_pos[1]]

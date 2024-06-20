@@ -92,6 +92,26 @@ class Piece:
         return symbols.get((self.piece_type, self.piece_color), '?')
     
 
+    # return's a piece's zobrist index for use in hashing
+    def zobrist_index(self) -> int:
+        indices = {
+            (PieceType.Pawn, PieceColor.White): 0,
+            (PieceType.Rook, PieceColor.White): 1,
+            (PieceType.Knight, PieceColor.White): 2,
+            (PieceType.Bishop, PieceColor.White): 3,
+            (PieceType.Queen, PieceColor.White): 4,
+            (PieceType.King, PieceColor.White): 5,
+
+            (PieceType.Pawn, PieceColor.Black): 6,
+            (PieceType.Rook, PieceColor.Black): 7,
+            (PieceType.Knight, PieceColor.Black): 8,
+            (PieceType.Bishop, PieceColor.Black): 9,
+            (PieceType.Queen, PieceColor.Black): 10,
+            (PieceType.King, PieceColor.Black): 11
+        }
+        return indices.get((self.piece_type, self.piece_color))
+
+
     # for reading FEN
     @staticmethod
     def from_character(char: str):
