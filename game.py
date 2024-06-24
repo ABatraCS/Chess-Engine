@@ -226,22 +226,24 @@ class Game:
             
             # check castling rights. this involves knowing if it's legal to castle
             if self.side_to_move == PieceColor.White:
-                if self.white_castle_kingside:
-                    if self.board[0][5] == None and self.board[0][6] == None:
+                if self.white_castle_kingside and self.board[0][7] != None: # check rook square
+                    if self.board[0][5] == None and self.board[0][6] == None and self.board[0][7].matches(Piece(PieceType.Rook, PieceColor.White)):
                         legal_moves.append(Move(location, (0, 6)))
-                if self.white_castle_queenside:
-                    if self.board[0][1] == None and self.board[0][2] == None and self.board[0][3] == None:
+                else: self.white_castle_kingside = False
+                if self.white_castle_queenside and self.board[0][0] != None:
+                    if self.board[0][1] == None and self.board[0][2] == None and self.board[0][3] == None and self.board[0][0].matches(Piece(PieceType.Rook, PieceColor.White)):
                         legal_moves.append(Move(location, (0, 2)))
+                else: self.white_castle_queenside = False
 
             else:
-                if self.black_castle_kingside:
-                    if self.board[7][5] == None and self.board[7][6] == None:
+                if self.black_castle_kingside and self.board[7][7] != None:
+                    if self.board[7][5] == None and self.board[7][6] == None and self.board[7][7].matches(Piece(PieceType.Rook, PieceColor.White)):
                         legal_moves.append(Move(location, (7, 6)))
-
-                if self.black_castle_queenside:
-                    if self.board[7][1] == None and self.board[7][2] == None and self.board[7][3] == None:
+                else: self.black_castle_kingside = False
+                if self.black_castle_queenside and self.board[7][0] != None:
+                    if self.board[7][1] == None and self.board[7][2] == None and self.board[7][3] == None and self.board[7][0].matches(Piece(PieceType.Rook, PieceColor.White)):
                         legal_moves.append(Move(location, (7, 2)))
-
+                else: self.black_castle_queenside = False
 
         return legal_moves
         
